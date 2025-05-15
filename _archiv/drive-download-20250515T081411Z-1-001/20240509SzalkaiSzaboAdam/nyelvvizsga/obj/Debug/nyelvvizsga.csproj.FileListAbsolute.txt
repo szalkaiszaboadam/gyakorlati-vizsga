@@ -1,0 +1,7 @@
+C:\Users\Szalkai-SzaboAdam\Downloads\20240509SzalkaiSzaboAdam\nyelvvizsga\bin\Debug\nyelvvizsga.exe.config
+C:\Users\Szalkai-SzaboAdam\Downloads\20240509SzalkaiSzaboAdam\nyelvvizsga\bin\Debug\nyelvvizsga.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\20240509SzalkaiSzaboAdam\nyelvvizsga\bin\Debug\nyelvvizsga.pdb
+C:\Users\Szalkai-SzaboAdam\Downloads\20240509SzalkaiSzaboAdam\nyelvvizsga\obj\Debug\nyelvvizsga.csproj.AssemblyReference.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\20240509SzalkaiSzaboAdam\nyelvvizsga\obj\Debug\nyelvvizsga.csproj.CoreCompileInputs.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\20240509SzalkaiSzaboAdam\nyelvvizsga\obj\Debug\nyelvvizsga.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\20240509SzalkaiSzaboAdam\nyelvvizsga\obj\Debug\nyelvvizsga.pdb

@@ -1,0 +1,11 @@
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\bin\Debug\playfair_gui.exe.config
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\bin\Debug\playfair_gui.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\bin\Debug\playfair_gui.pdb
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\obj\Debug\playfair_gui.csproj.AssemblyReference.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\obj\Debug\playfair_gui.csproj.SuggestedBindingRedirects.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\obj\Debug\playfair_gui.Form1.resources
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\obj\Debug\playfair_gui.Properties.Resources.resources
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\obj\Debug\playfair_gui.csproj.GenerateResource.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\obj\Debug\playfair_gui.csproj.CoreCompileInputs.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\obj\Debug\playfair_gui.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231109\playfair_gui\obj\Debug\playfair_gui.pdb

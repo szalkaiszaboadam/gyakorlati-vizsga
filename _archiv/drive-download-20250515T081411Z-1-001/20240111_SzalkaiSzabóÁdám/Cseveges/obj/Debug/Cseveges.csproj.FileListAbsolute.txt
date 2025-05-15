@@ -1,0 +1,8 @@
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges\bin\Debug\Cseveges.exe.config
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges\bin\Debug\Cseveges.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges\bin\Debug\Cseveges.pdb
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges\obj\Debug\Cseveges.csproj.AssemblyReference.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges\obj\Debug\Cseveges.csproj.SuggestedBindingRedirects.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges\obj\Debug\Cseveges.csproj.CoreCompileInputs.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges\obj\Debug\Cseveges.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges\obj\Debug\Cseveges.pdb

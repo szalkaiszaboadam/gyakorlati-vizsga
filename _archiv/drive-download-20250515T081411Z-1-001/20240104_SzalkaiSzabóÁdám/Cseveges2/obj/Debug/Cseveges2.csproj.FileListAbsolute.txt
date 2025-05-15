@@ -1,0 +1,11 @@
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\bin\Debug\Cseveges2.exe.config
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\bin\Debug\Cseveges2.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\bin\Debug\Cseveges2.pdb
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\obj\Debug\Cseveges2.csproj.AssemblyReference.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\obj\Debug\Cseveges2.csproj.SuggestedBindingRedirects.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\obj\Debug\Cseveges2.Form1.resources
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\obj\Debug\Cseveges2.Properties.Resources.resources
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\obj\Debug\Cseveges2.csproj.GenerateResource.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\obj\Debug\Cseveges2.csproj.CoreCompileInputs.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\obj\Debug\Cseveges2.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\20240104_SzalkaiSzabóÁdám\Cseveges2\obj\Debug\Cseveges2.pdb

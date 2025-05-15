@@ -1,0 +1,10 @@
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\obj\Debug\alapok2.csproj.AssemblyReference.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\obj\Debug\alapok2.csproj.SuggestedBindingRedirects.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\obj\Debug\alapok2.Properties.Resources.resources
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\obj\Debug\alapok2.csproj.GenerateResource.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\obj\Debug\alapok2.csproj.CoreCompileInputs.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\bin\Debug\alapok2.exe.config
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\bin\Debug\alapok2.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\bin\Debug\alapok2.pdb
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\obj\Debug\alapok2.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231012\alapok2\obj\Debug\alapok2.pdb

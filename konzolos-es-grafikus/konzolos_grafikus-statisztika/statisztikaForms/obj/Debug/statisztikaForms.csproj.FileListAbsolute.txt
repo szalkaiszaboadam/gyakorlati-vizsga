@@ -1,0 +1,11 @@
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\bin\Debug\statisztikaForms.exe.config
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\bin\Debug\statisztikaForms.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\bin\Debug\statisztikaForms.pdb
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\obj\Debug\statisztikaForms.csproj.AssemblyReference.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\obj\Debug\statisztikaForms.csproj.SuggestedBindingRedirects.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\obj\Debug\statisztikaForms.Properties.Resources.resources
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\obj\Debug\statisztikaForms.csproj.GenerateResource.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\obj\Debug\statisztikaForms.csproj.CoreCompileInputs.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\obj\Debug\statisztikaForms.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\obj\Debug\statisztikaForms.pdb
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231005\statisztikaForms\obj\Debug\statisztikaForms.Screen.resources

@@ -1,0 +1,8 @@
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231019\playfair\bin\Debug\playfair.exe.config
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231019\playfair\bin\Debug\playfair.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231019\playfair\bin\Debug\playfair.pdb
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231019\playfair\obj\Debug\playfair.csproj.AssemblyReference.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231019\playfair\obj\Debug\playfair.csproj.SuggestedBindingRedirects.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231019\playfair\obj\Debug\playfair.csproj.CoreCompileInputs.cache
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231019\playfair\obj\Debug\playfair.exe
+C:\Users\Szalkai-SzaboAdam\Downloads\Szalkai-SzaboAdamFeladat20231019\playfair\obj\Debug\playfair.pdb
