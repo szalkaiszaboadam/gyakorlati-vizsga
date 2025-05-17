@@ -1,0 +1,7 @@
+"use client";
+
+import RealEstateApp from "@/components/RealEstateApp";
+
+export default function Page() {
+  return <RealEstateApp />;
+}

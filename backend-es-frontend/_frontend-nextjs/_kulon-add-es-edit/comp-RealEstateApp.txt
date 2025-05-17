@@ -1,0 +1,94 @@
+"use client";
+import { useEffect, useState } from "react";
+import AddEstateForm from "./components/AddEstateForm";
+import EditEstateForm from "./components/EditEstateForm";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
+type Ingatlan = {
+  id: number;
+  category: string;
+  seller: string;
+  description: string;
+  createAt: string;
+  imageUrl: string;
+};
+
+export default function RealEstateApp() {
+  const [ingatlanok, setIngatlanok] = useState<Ingatlan[]>([]);
+  const [selectedIngatlan, setSelectedIngatlan] = useState<Ingatlan | null>(null);
+
+  const fetchIngatlanok = async () => {
+    const res = await fetch("http://localhost:3000/api/ingatlan");
+    const data = await res.json();
+    setIngatlanok(data);
+  };
+
+  useEffect(() => {
+    fetchIngatlanok();
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    await fetch(`http://localhost:3000/api/ingatlan/${id}`, {
+      method: "DELETE",
+    });
+    fetchIngatlanok();
+  };
+
+  return (
+    <div className="p-6 space-y-8">
+      <h1 className="text-3xl font-bold">🏠 Ingatlan kezelő</h1>
+
+      {selectedIngatlan ? (
+        <EditEstateForm
+          ingatlan={selectedIngatlan}
+          onCancel={() => setSelectedIngatlan(null)}
+          onSuccess={() => {
+            setSelectedIngatlan(null);
+            fetchIngatlanok();
+          }}
+        />
+      ) : (
+        <AddEstateForm onSuccess={fetchIngatlanok} />
+      )}
+
+      <Card>
+        <CardContent className="p-4">
+          <h2 className="text-xl font-semibold mb-4">📋 Ingatlan lista</h2>
+          <table className="w-full table-auto border">
+            <thead>
+              <tr>
+                <th className="border px-2">#</th>
+                <th className="border px-2">Kategória</th>
+                <th className="border px-2">Eladó</th>
+                <th className="border px-2">Leírás</th>
+                <th className="border px-2">Dátum</th>
+                <th className="border px-2">Kép</th>
+                <th className="border px-2">Műveletek</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ingatlanok.map((i) => (
+                <tr key={i.id} className="border">
+                  <td className="border px-2">{i.id}</td>
+                  <td className="border px-2">{i.category}</td>
+                  <td className="border px-2">{i.seller}</td>
+                  <td className="border px-2">{i.description}</td>
+                  <td className="border px-2">{i.createAt}</td>
+                  <td className="border px-2">
+                    <img src={i.imageUrl} alt="ingatlan" className="w-16 h-16 object-cover" />
+                  </td>
+                  <td className="border px-2 flex gap-2">
+                    <Button onClick={() => setSelectedIngatlan(i)}>Szerkesztés</Button>
+                    <Button onClick={() => handleDelete(i.id)} variant="destructive">Törlés</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+

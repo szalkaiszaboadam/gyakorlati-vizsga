@@ -1,0 +1,70 @@
+"use client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export default function EditEstateForm({ ingatlan, onCancel, onSuccess }: {
+  ingatlan: any;
+  onCancel: () => void;
+  onSuccess: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    kategoria: ingatlan.category,
+    elado: ingatlan.seller,
+    leiras: ingatlan.description,
+    hirdetesDatuma: ingatlan.createAt,
+    tehermentes: false,
+    kepUrl: ingatlan.imageUrl,
+    terulet: "",
+    szobak: "",
+    emeletek: "",
+    koordinatak: ""
+  });
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetch(`http://localhost:3000/api/ingatlan/${ingatlan.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+    onSuccess();
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <h2 className="text-xl font-semibold mb-4">✏️ Ingatlan szerkesztése</h2>
+        <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.entries(formData).map(([key, value]) => (
+            <div key={key} className="flex flex-col">
+              <Label htmlFor={key}>{key}</Label>
+              {typeof value === "boolean" ? (
+                <input
+                  type="checkbox"
+                  id={key}
+                  checked={value}
+                  onChange={(e) => setFormData({ ...formData, [key]: e.target.checked })}
+                />
+              ) : (
+                <Input
+                  id={key}
+                  value={value}
+                  onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+                />
+              )}
+            </div>
+          ))}
+          <div className="flex gap-2">
+            <Button type="submit">Frissítés</Button>
+            <Button type="button" variant="secondary" onClick={onCancel}>
+              Mégse
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
