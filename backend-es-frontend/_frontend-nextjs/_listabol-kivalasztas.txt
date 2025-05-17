@@ -1,0 +1,123 @@
+
+ const [employees, setEmployees] = useState<any[]>([]);
+  const [selectedValue, setSelectedValue] = useState<string>('');
+  const [schedule, setSchedule] = useState<any[]>([]);
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/config/getEmployees?school_id=${session?.user?.school_id}`);
+      const data = await response.json();
+      if (response.ok) {
+        setEmployees(data);
+      } else {
+        console.error('Error fetching employees');
+      }
+    } catch (error) {
+      console.error('Error connecting to the server');
+    }
+  };
+  
+
+
+
+
+
+
+
+
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const classOptions = useMemo(() => {
+    return Array.from(new Set(employees.map((employee) => employee.osztalyfonok)));
+  }, [employees]);
+
+  const teacherOptions = useMemo(() => {
+    return Array.from(new Set(employees.map((employee) => employee.short_name)));
+  }, [employees]);
+
+  useEffect(() => {
+    if (selectedValue) {
+      if (classOptions.includes(selectedValue)) {
+        fetchClassTimetable(selectedValue);
+      } else if (teacherOptions.includes(selectedValue)) {
+        fetchTeacherTimetable(selectedValue);
+      }
+    }
+  }, [selectedValue]);
+
+
+const fetchClassTimetable = async (className: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/timetable/getClassTimetable?className=${className}`);
+      const data = await response.json();
+      const formattedData = data.map((lesson: any) => ({
+        day: lesson.day_of_week,
+        start: lesson.start_time.slice(0, 5),
+        end: lesson.end_time.slice(0, 5),
+        subject: lesson.group_name,
+        teacher: lesson.teacher_name,
+        class: lesson.class
+      }));
+      setSchedule(formattedData);
+    } catch (error) {
+      console.error('Error fetching class timetable:', error);
+    }
+  };
+
+  const fetchTeacherTimetable = async (teacherName: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/timetable/getTeacherTimetable?teacherName=${teacherName}`);
+      const data = await response.json();
+      const formattedData = data.map((lesson: any) => ({
+        day: lesson.day_of_week,
+        start: lesson.start_time.slice(0, 5),
+        end: lesson.end_time.slice(0, 5),
+        subject: lesson.group_name,
+        teacher: lesson.teacher_name,
+        class: lesson.class
+      }));
+      setSchedule(formattedData);
+    } catch (error) {
+      console.error('Error fetching teacher timetable:', error);
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+
+<Select value={selectedValue} onValueChange={setSelectedValue}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Válasszon..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Osztályok</SelectLabel>
+                          {classOptions.map((className, index) => (
+                            <SelectItem key={index} value={className}>
+                              {className}
+                            </SelectItem>
+                          ))}
+                          <SelectLabel>Tanárok</SelectLabel>
+                          {teacherOptions.map((teacherName, index) => (
+                            <SelectItem key={index} value={teacherName}>
+                              {teacherName}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+
+
+
+
+
