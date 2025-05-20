@@ -1,0 +1,191 @@
+Naná! Teljesen igazad van, egy nagyon fontos dologra tapintottál rá! Bár a MySql.Data (MySQL Connector/NET) volt hosszú ideig a hagyományos és hivatalos illesztőprogram a MySQL-hez .NET-ben, a MySqlConnector egy kiváló alternatívaként jelent meg, és egyre inkább ez válik az elsődleges választássá az új .NET fejlesztésekhez MySQL-lel.
+
+Nézzük meg, miért is olyan jelentős a MySqlConnector:
+
+MySqlConnector vs. MySql.Data (MySQL Connector/NET)
+Jellemző/Aspektus	MySql.Data (MySQL Connector/NET)	MySqlConnector
+Fejlesztő	Oracle (a MySQL tulajdonosa)	Közösség által fejlesztett (pl. @bgrainger és mások tartják karban)
+Teljesítmény	Általában jó, de lehet kevésbé optimalizált.	Jelentősen gyorsabb és nagyobb teljesítményű. Modern .NET gyakorlatokkal a nulláról írva.
+Aszinkron támogatás	Korlátozott vagy kevésbé hatékony async/await támogatás.	Kiváló és natív async/await támogatás. Modern aszinkron programozásra tervezve.
+.NET platform	Elsősorban .NET Framework-re készült, bár az újabb verziók támogatják a .NET Standardot.	Erősen optimalizált .NET Standard és .NET Core/.NET 5+ számára, teljes .NET Framework támogatással.
+Licencelés	GPLv2 (lehetnek következményei a tulajdonosi alkalmazásokra, ha közvetlenül hivatkozol rá).	MIT licenc. Sokkal megengedőbb és fejlesztőbarátabb a tulajdonosi alkalmazások számára.
+Memóriahasználat	Magasabb lehet.	Alacsonyabb memóriafogyasztás.
+Funkciók	Átfogó, de néhány funkció kevésbé intuitív vagy kevésbé hatékony.	Átfogó, gyakran modernebb implementációkkal és jobb kezeléssel olyan funkciókhoz, mint az előkészített utasítások (prepared statements).
+Karbantarthatóság	A frissítések ritkábban érkezhetnek, vagy az Oracle kiadási ciklusaival vannak összefüggésben.	Aktívan fejlesztik és gyakran frissítik egy elkötelezett közösség tagjai.
+
+Exportálás Táblázatok-fájlba
+A MySqlConnector fő előnyei
+Sebesség és hatékonyság: Gyakran sokkal gyorsabbnak tartják, mint a MySql.Data-t, különösen nagy volumenű műveletek esetén, köszönhetően optimalizált belső felépítésének és a hálózati erőforrások hatékony kihasználásának.
+Modern .NET design: Natívan támogatja a modern .NET aszinkron mintákat (async/await), ami reszponzívabbá és skálázhatóbbá teszi a kódot, különösen webes alkalmazásokban vagy szolgáltatásokban.
+Keresztplatform kompatibilitás: A .NET Standardra épülve zökkenőmentesen működik a .NET Framework, .NET Core, .NET 5+ és Mono környezetekben is.
+Megengedő licencelés: Az MIT licenc sokkal nagyobb rugalmasságot biztosít a kereskedelmi és tulajdonosi alkalmazások fejlesztésében, a GPL licencelési aggodalmak nélkül.
+Aktív fejlesztés: Aktívan karbantartja és fejleszti egy elkötelezett közösség, ami gyorsabb hibajavításokat és új funkciókat jelent.
+Mikor használd a MySqlConnector-t?
+Bármely új projekthez: Erősen ajánlott. Teljesítménye, aszinkron támogatása és modern felépítése miatt ez a jobb választás.
+Meglévő projektek migrálásához: Ha teljesítménybeli szűk keresztmetszetekkel találkozol, vagy modernizálni szeretnéd az adatbázis-elérési kódodat, a MySql.Data-ról a MySqlConnector-re való áttérés gyakran előnyös lépés. Az API nagyon hasonló (mindkettő az ADO.NET interfészt implementálja), így az átállás általában minimális erőfeszítést igényel.
+Hogyan használd a MySqlConnector-t a Windows Forms alkalmazásodban?
+Telepítsd NuGet-en keresztül:
+A Visual Studióban kattints jobb gombbal a RealEstateGUI projektedre a Solution Explorerben -> "Manage NuGet Packages..." -> Böngészés -> Keresd meg a MySqlConnector szót -> Telepítés.
+
+Frissítsd a using utasítást:
+Változtasd meg a using MySql.Data.MySqlClient; sort using MySqlConnector; sorra a Form1.cs fájl tetején.
+
+Kapcsolati sztring: A kapcsolati sztring formátuma általában megegyezik.
+
+Íme a Form1.cs fájlod példája a MySqlConnector használatával:
+
+C#
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using MySqlConnector; // <-- Itt változott MySql.Data.MySqlClient; -ről MySqlConnector; -ra
+
+namespace RealEstateGUI
+{
+    public partial class Form1 : Form
+    {
+        private string connectionString = "Server=localhost;Port=3306;Database=ingatlan;Uid=root;Pwd=;"; // Cseréld a saját adataidra!
+
+        public Form1()
+        {
+            InitializeComponent();
+            LoadSellers(); // Eladók betöltése az indításkor
+            this.lstSellers.SelectedIndexChanged += new EventHandler(lstSellers_SelectedIndexChanged);
+            this.btnLoadAds.Click += new EventHandler(btnLoadAds_Click);
+        }
+
+        private void LoadSellers()
+        {
+            List<Seller> sellers = new List<Seller>();
+            try
+            {
+                // Használjuk a MySqlConnection-t a MySqlConnector-ból
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string query = "SELECT id, name, phone FROM sellers";
+                    // Használjuk a MySqlCommand-ot a MySqlConnector-ból
+                    MySqlCommand command = new MySqlCommand(query, connection);
+                    // Használjuk a MySqlDataReader-t a MySqlConnector-ból
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            sellers.Add(new Seller
+                            {
+                                Id = reader.GetInt32("id"),
+                                Name = reader.GetString("name"),
+                                Phone = reader.GetString("phone")
+                            });
+                        }
+                    }
+                }
+                lstSellers.DataSource = sellers;
+                lstSellers.DisplayMember = "Name";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Hiba az eladók betöltésekor: {ex.Message}", "Adatbázis hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void lstSellers_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lstSellers.SelectedItem is Seller selectedSeller)
+            {
+                txtSellerName.Text = selectedSeller.Name;
+                txtSellerPhone.Text = selectedSeller.Phone;
+                txtAdCount.Text = "";
+            }
+            else
+            {
+                txtSellerName.Text = "";
+                txtSellerPhone.Text = "";
+                txtAdCount.Text = "";
+            }
+        }
+
+        private void btnLoadAds_Click(object sender, EventArgs e)
+        {
+            if (lstSellers.SelectedItem is Seller selectedSeller)
+            {
+                int adCount = 0;
+                try
+                {
+                    using (MySqlConnection connection = new MySqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        string query = "SELECT COUNT(*) FROM ads WHERE sellerId = @sellerId";
+                        MySqlCommand command = new MySqlCommand(query, connection);
+                        command.Parameters.AddWithValue("@sellerId", selectedSeller.Id);
+                        adCount = Convert.ToInt32(command.ExecuteScalar());
+                    }
+                    txtAdCount.Text = adCount.ToString();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Hiba a hirdetések számának lekérdezésekor: {ex.Message}", "Adatbázis hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    txtAdCount.Text = "Hiba!";
+                }
+            }
+            else
+            {
+                MessageBox.Show("Válasszon ki egy eladót a listából!", "Nincs kiválasztva", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                txtAdCount.Text = "";
+            }
+        }
+    }
+
+    // --- Osztálydefiníciók a Form1.cs fájlban ---
+    public class Category
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class Seller
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Phone { get; set; }
+    }
+
+    public class Ad
+    {
+        public int Id { get; set; }
+        public string Description { get; set; }
+        public int Rooms { get; set; }
+        public int Area { get; set; }
+        public int Floors { get; set; }
+        public Category Category { get; set; }
+        public Seller Seller { get; set; }
+        public bool FreeOfCharge { get; set; }
+        public string ImageUrl { get; set; }
+        public string Latlong { get; set; }
+        public DateTime CreateAt { get; set; }
+
+        public Ad(int id, string description, int rooms, int area, int floors, Category category, Seller seller, bool freeOfCharge, string imageUrl, string latlong, DateTime createAt)
+        {
+            Id = id;
+            Description = description;
+            Rooms = rooms;
+            Area = area;
+            Floors = floors;
+            Category = category;
+            Seller = seller;
+            FreeOfCharge = freeOfCharge;
+            ImageUrl = imageUrl;
+            Latlong = latlong;
+            CreateAt = createAt;
+        }
+
+        public Ad() { }
+    }
+}

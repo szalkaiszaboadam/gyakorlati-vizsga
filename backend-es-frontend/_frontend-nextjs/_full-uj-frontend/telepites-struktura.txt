@@ -1,0 +1,79 @@
+
+Project Setup and Dependencies
+If you haven't already, create a new Next.js project with the App Router enabled and TypeScript:
+
+Bash
+
+npx create-next-app real-estate-app --typescript --app
+cd real-estate-app
+Then, install Bootstrap:
+
+Bash
+
+npm install bootstrap
+
+
+
+1. Integrating Bootstrap with the App Router
+With the App Router, global styles and scripts are typically imported in your root layout.tsx.
+
+app/layout.tsx:
+
+TypeScript
+
+// app/layout.tsx
+import 'bootstrap/dist/css/bootstrap.min.css';
+import '../styles/globals.css'; // Your custom global styles
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Ingatlan Portál',
+  description: 'Találja meg álmai otthonát, vagy adja fel hirdetését nálunk!',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="hu">
+      <body>{children}</body>
+    </html>
+  );
+}
+
+
+
+
+
+
+
+real-estate-app/
+├── node_modules/
+├── public/
+│   └── real-estate-agent.png
+│   └── favicon.ico
+├── app/
+│   ├── layout.tsx      (Root layout for global imports and metadata)
+│   ├── page.tsx        (Home Page - route '/')
+│   ├── offers/
+│   │   └── page.tsx    (Offers Page - route '/offers')
+│   └── newad/
+│       └── page.tsx    (New Ad Page - route '/newad')
+├── interfaces/         (New directory for shared interfaces)
+│   └── ingatlan.ts     (Ingatlan and Kategoria interfaces)
+├── styles/
+│   ├── globals.css
+│   ├── openpage.module.css
+│   └── newad.module.css (Optional, if you add specific styles for newad)
+├── package.json
+├── package-lock.json
+├── tsconfig.json       (TypeScript configuration)
+└── next.config.js
+Before zipping, remember to:
+
+Stop the Next.js development server.
+Delete the node_modules folder.
+Delete the .next folder.
+Then, compress your real-estate-app directory (or the relevant source code directory) into a .zip file named Vezetéknév_Keresztnév_frontend.zip.

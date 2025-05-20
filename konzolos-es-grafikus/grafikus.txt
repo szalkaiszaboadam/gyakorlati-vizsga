@@ -1,0 +1,210 @@
+Rendben, a kérésnek megfelelően most a Form1.cs fájlba tesszük az osztálydefiníciókat.
+
+1. Adatbázis előkészítése
+Ez a lépés változatlan. Győződjön meg róla, hogy az ingatlan nevű adatbázis létrehozásra került UTF-8 kódolással és magyar egybevetéssel, és az ingatlan.sql szkript is lefutott rajta.
+
+Példa MySQL esetén (phpMyAdmin-ben vagy MySQL Workbench-ben):
+SQL
+
+CREATE DATABASE ingatlan CHARACTER SET utf8mb4 COLLATE utf8mb4_hungarian_ci;
+2. Grafikus alkalmazás (RealEstateGUI) elkészítése Windows Forms-ban
+Projekt létrehozása
+Nyissa meg a Visual Studio-t.
+Válassza a Create a new project lehetőséget.
+Keresse meg és válassza ki a Windows Forms App (.NET Framework) sablont.
+Kattintson a Next gombra.
+Nevezze el a projektet RealEstateGUI-nak.
+Kattintson a Create gombra.
+NuGet csomag hozzáadása
+Szüksége lesz egy NuGet csomagra az adatbázis eléréséhez. Példánkban feltételezzük, hogy MySQL adatbázist használ, így az MySql.Data csomagot kell használnia.
+
+Kattintson jobb gombbal a RealEstateGUI projektre a Solution Explorer-ben, válassza a Manage NuGet Packages... menüpontot.
+A Browse fülön keressen rá a MySql.Data csomagra, és telepítse. Ha más adatbázist használ, telepítse a megfelelő adatbázis-illesztőt (pl. System.Data.SqlClient SQL Serverhez, Npgsql PostgreSQLhez).
+Felhasználói felület tervezése (Form1.cs [Design])
+Helyezze el a következő vezérlőket a Form1 ablakra a Toolbox segítségével, és állítsa be a nevüket és a szövegüket a mintának megfelelően:
+
+Label: Text = "Eladók listája:"
+ListBox: Name = lstSellers
+A Properties ablakban állítsa be a DisplayMember tulajdonságot Name-re.
+A SelectionMode tulajdonságot hagyja One-on.
+Label: Text = "Eladó neve:"
+TextBox: Name = txtSellerName, ReadOnly = true (csak megjelenítésre)
+Label: Text = "Eladó telefonszáma:"
+TextBox: Name = txtSellerPhone, ReadOnly = true
+Button: Name = btnLoadAds, Text = "Hirdetések betöltése"
+Label: Text = "Hirdetések száma:"
+TextBox: Name = txtAdCount, ReadOnly = true
+A vezérlők elrendezését tetszés szerint alakíthatja.
+
+C# kód (Form1.cs)
+Nyissa meg a Form1.cs fájlt. A kódban a Form1 osztály után helyezzük el a Category, Seller és Ad osztályok definícióit.
+
+C#
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using MySql.Data.MySqlClient; // Adatbázis-kapcsolat
+
+namespace RealEstateGUI
+{
+    public partial class Form1 : Form
+    {
+        private string connectionString = "Server=localhost;Port=3306;Database=ingatlan;Uid=root;Pwd=;"; // Cseréld a saját adataidra!
+
+        public Form1()
+        {
+            InitializeComponent();
+            LoadSellers(); // Eladók betöltése az indításkor
+            this.lstSellers.SelectedIndexChanged += new EventHandler(lstSellers_SelectedIndexChanged);
+            this.btnLoadAds.Click += new EventHandler(btnLoadAds_Click);
+        }
+
+        // 12. Csatlakozzon az ingatlan adatbázishoz!
+        // A mintán szereplő bal oldali listába töltse be a sellers tábla összes rekordját!
+        // A listában csak a vevők nevei jelenjenek meg!
+        private void LoadSellers()
+        {
+            List<Seller> sellers = new List<Seller>();
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string query = "SELECT id, name, phone FROM sellers";
+                    MySqlCommand command = new MySqlCommand(query, connection);
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            sellers.Add(new Seller
+                            {
+                                Id = reader.GetInt32("id"),
+                                Name = reader.GetString("name"),
+                                Phone = reader.GetString("phone")
+                            });
+                        }
+                    }
+                }
+                lstSellers.DataSource = sellers;
+                lstSellers.DisplayMember = "Name"; // Ez biztosítja, hogy csak a név jelenjen meg
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Hiba az eladók betöltésekor: {ex.Message}", "Adatbázis hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // 13. Az „Eladó neve” címke mellett a lista kijelölt eleme jelenjen meg adatkötés segítségével!
+        // 14. Az „Eladó telefonszáma” címke mellett a lista kijelölt elemének telefonszáma jelenjen meg adatkötés segítségével!
+        private void lstSellers_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lstSellers.SelectedItem is Seller selectedSeller)
+            {
+                txtSellerName.Text = selectedSeller.Name;
+                txtSellerPhone.Text = selectedSeller.Phone;
+                txtAdCount.Text = ""; // Töröljük a hirdetés számát, ha új eladót választunk
+            }
+            else
+            {
+                txtSellerName.Text = "";
+                txtSellerPhone.Text = "";
+                txtAdCount.Text = "";
+            }
+        }
+
+        // 15. A „Hirdetések betöltése” gombra kattintva az „Hirdetések száma” címke mellett
+        // a lista kijelölt eleme alapján jelenjen meg, hogy az adott személyhez hány hirdetés tartozik!
+        private void btnLoadAds_Click(object sender, EventArgs e)
+        {
+            if (lstSellers.SelectedItem is Seller selectedSeller)
+            {
+                int adCount = 0;
+                try
+                {
+                    using (MySqlConnection connection = new MySqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        string query = "SELECT COUNT(*) FROM ads WHERE sellerId = @sellerId";
+                        MySqlCommand command = new MySqlCommand(query, connection);
+                        command.Parameters.AddWithValue("@sellerId", selectedSeller.Id);
+                        adCount = Convert.ToInt32(command.ExecuteScalar());
+                    }
+                    txtAdCount.Text = adCount.ToString();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Hiba a hirdetések számának lekérdezésekor: {ex.Message}", "Adatbázis hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    txtAdCount.Text = "Hiba!";
+                }
+            }
+            else
+            {
+                MessageBox.Show("Válasszon ki egy eladót a listából!", "Nincs kiválasztva", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                txtAdCount.Text = "";
+            }
+        }
+    }
+
+    // --- Osztálydefiníciók a Form1.cs fájlban ---
+    public class Category
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class Seller
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Phone { get; set; }
+    }
+
+    public class Ad
+    {
+        public int Id { get; set; }
+        public string Description { get; set; }
+        public int Rooms { get; set; }
+        public int Area { get; set; }
+        public int Floors { get; set; }
+        public Category Category { get; set; }
+        public Seller Seller { get; set; }
+        public bool FreeOfCharge { get; set; }
+        public string ImageUrl { get; set; }
+        public string Latlong { get; set; }
+        public DateTime CreateAt { get; set; }
+
+        public Ad(int id, string description, int rooms, int area, int floors, Category category, Seller seller, bool freeOfCharge, string imageUrl, string latlong, DateTime createAt)
+        {
+            Id = id;
+            Description = description;
+            Rooms = rooms;
+            Area = area;
+            Floors = floors;
+            Category = category;
+            Seller = seller;
+            FreeOfCharge = freeOfCharge;
+            ImageUrl = imageUrl;
+            Latlong = latlong;
+            CreateAt = createAt;
+        }
+
+        public Ad() { }
+    }
+}
+Magyarázat
+Osztályok elhelyezése: A Category, Seller és Ad osztályok definícióit a Form1 osztály után, de még a namespace RealEstateGUI blokkon belül helyeztük el. Ezzel a megoldással minden releváns kód egyetlen fájlban marad, ami egyszerűbbé teheti a kezelést kisebb projektek esetén.
+A további logika, mint a connectionString, az adatok betöltése a ListBox-ba, az adatkötések (amiket itt manuálisan kezelünk a SelectedIndexChanged eseménnyel), és a hirdetések számának lekérdezése, pontosan ugyanúgy működik, mint az előző példában.
+Futtatási útmutató
+Hozza létre a projektet: A fentebb leírt "Projekt létrehozása" lépéseket követve hozzon létre egy Windows Forms App (.NET Framework) projektet RealEstateGUI néven.
+NuGet csomag telepítése: Adja hozzá a MySql.Data NuGet csomagot (vagy a megfelelő adatbázis-illesztőt) a projekthez.
+Felhasználói felület tervezése: A "Felhasználói felület tervezése" rész alapján rendezze el a vezérlőket a Form1.cs [Design] ablakban, és állítsa be a nevüket és a tulajdonságaikat.
+C# kód bemásolása: Nyissa meg a Form1.cs fájlt, és másolja be a fent megadott kódot. Ne felejtse el beállítani a connectionString változót a saját adatbázis-adataival!
+Futtatás: Indítsa el az alkalmazást (pl. Visual Studio-ban F5). Az ablak megjelenik, betölti az eladókat, és a funkcionalitás a leírtak szerint fog működni.
+Ez a megközelítés teljesen önállóvá teszi a RealEstateGUI projektet, mivel minden szükséges osztálydefiníciót tartalmaz, és nincs szüksége külső projektre való hivatkozásra.

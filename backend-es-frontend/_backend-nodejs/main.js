@@ -17,7 +17,7 @@ const pool = mysql.createPool({
 });
 
 
-
+/////////////////////////////      https://reqres.in/
 
 
 // GET /api/ingatlan
@@ -52,7 +52,10 @@ app.get('/api/ingatlan', async (req, res) => {
 
 
 
-// POST /api/ujingatlan
+// POST /api/ujingatlan      
+
+// BODY --- JSON --- "valami", "123",
+
 app.post('/api/ujingatlan', async (req, res) => {
     const { kategoria, elado, leiras, hirdetesDatuma, tehermentes, kepUrl, terulet, szobak, emeletek, koordinatak } = req.body;
 

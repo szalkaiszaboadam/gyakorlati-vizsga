@@ -1,0 +1,111 @@
+3. Offers Display Component (app/offers/page.tsx)
+Create an offers folder inside app, and then page.tsx inside that. This will also be a Client Component as it fetches data on the client side using useEffect.
+
+First, define your interfaces in interfaces/ingatlan.ts (create this folder and file):
+
+interfaces/ingatlan.ts:
+
+TypeScript
+
+// interfaces/ingatlan.ts
+export interface Ingatlan {
+  id: number;
+  kategoriaId: number;
+  kategoriaNev: string;
+  leiras: string;
+  hirdetesDatuma: string;
+  tehermentes: boolean;
+  kepUrl: string;
+}
+
+export interface Kategoria {
+  id: number;
+  megnevezes: string;
+}
+Now for the OffersPage:
+
+app/offers/page.tsx:
+
+TypeScript
+
+// app/offers/page.tsx
+"use client"; // This component needs client-side interactivity
+
+import { useState, useEffect } from 'react';
+import Head from 'next/head'; // Still useful for specific page titles/meta
+import Link from 'next/link';
+import { Ingatlan } from '../../interfaces/ingatlan'; // Adjust path for app directory
+
+const OffersPage: React.FC = () => {
+  const [offers, setOffers] = useState<Ingatlan[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchOffers() {
+      try {
+        const response = await fetch('http://localhost:5000/api/ingatlan');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: Ingatlan[] = await response.json();
+        setOffers(data);
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOffers();
+  }, []);
+
+  if (loading) return <div className="container mt-5 text-center">Betöltés...</div>;
+  if (error) return <div className="container mt-5 text-center alert alert-danger">Hiba történt: {error}</div>;
+
+  return (
+    <div className="container mt-5">
+      <Head>
+        <title>Ingatlan Kínálat</title>
+      </Head>
+      <h1 className="mb-4">Eladó Ingatlanok</h1>
+
+      {offers.length === 0 ? (
+        <p className="alert alert-info">Nincs megjeleníthető ingatlan.</p>
+      ) : (
+        <div className="table-responsive">
+          <table className="table table-striped table-hover">
+            <thead className="thead-dark">
+              <tr>
+                <th>Kategória</th>
+                <th>Leírás</th>
+                <th>Hirdetés Dátuma</th>
+                <th>Tehermentes</th>
+                <th>Kép</th>
+              </tr>
+            </thead>
+            <tbody>
+              {offers.map((offer) => (
+                <tr key={offer.id}>
+                  <td>{offer.kategoriaNev}</td>
+                  <td>{offer.leiras}</td>
+                  <td>{offer.hirdetesDatuma}</td>
+                  <td>{offer.tehermentes ? 'Igen' : 'Nem'}</td>
+                  <td>
+                    {offer.kepUrl && (
+                      <img src={offer.kepUrl} alt="Ingatlan kép" style={{ width: '100px', height: 'auto', maxWidth: '150px' }} />
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <Link href="/" passHref>
+        <button className="btn btn-secondary mt-3">Vissza a főoldalra</button>
+      </Link>
+    </div>
+  );
+};
+
+export default OffersPage;

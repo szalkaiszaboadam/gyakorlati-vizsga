@@ -1,0 +1,39 @@
+styles/openpage.module.css (remains the same, place real-estate-agent.png in public):
+
+CSS
+
+/* styles/openpage.module.css */
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-image: url('/real-estate-agent.png'); /* Assuming image is in public folder */
+  background-size: cover;
+  background-position: center;
+  color: white; /* Adjust text color for better readability */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Add text shadow for contrast */
+}
+
+.main {
+  text-align: center;
+  padding: 2rem;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for content */
+  border-radius: 10px;
+}
+
+.title {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.description {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+}

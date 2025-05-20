@@ -1,0 +1,192 @@
+4. New Ad Creation Component (app/newad/page.tsx)
+Similar to the offers page, create a newad folder inside app, and then page.tsx inside that. This will also be a Client Component because it handles form state and submission logic.
+
+app/newad/page.tsx:
+
+TypeScript
+
+// app/newad/page.tsx
+"use client"; // This component needs client-side interactivity
+
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import Head from 'next/head'; // Still useful for specific page titles/meta
+import { useRouter } from 'next/navigation'; // Use 'next/navigation' for App Router
+import { Kategoria } from '../../interfaces/ingatlan'; // Adjust path for app directory
+
+interface NewAdFormData {
+  kategoriaId: number;
+  leiras: string;
+  hirdetesDatuma: string;
+  tehermentes: boolean;
+  kepUrl: string;
+}
+
+const NewAdPage: React.FC = () => {
+  const router = useRouter();
+  const [categories, setCategories] = useState<Kategoria[]>([]);
+  const [formData, setFormData] = useState<NewAdFormData>({
+    kategoriaId: 0, // Will be set after categories are fetched
+    leiras: '',
+    hirdetesDatuma: new Date().toISOString().slice(0, 10), // Current date (YYYY-MM-DD)
+    tehermentes: false,
+    kepUrl: '',
+  });
+  const [submitMessage, setSubmitMessage] = useState<string>('');
+  const [isError, setIsError] = useState<boolean>(false);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const response = await fetch('http://localhost:5000/api/kategoriak');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: Kategoria[] = await response.json();
+        setCategories(data);
+        if (data.length > 0) {
+          setFormData((prev) => ({ ...prev, kategoriaId: data[0].id })); // Set default category
+        }
+      } catch (e: any) {
+        console.error("Failed to fetch categories:", e);
+        setSubmitMessage("Kategóriák betöltése sikertelen.");
+        setIsError(true);
+      }
+    }
+    fetchCategories();
+  }, []);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    // Type assertion for checkbox is needed here as 'e.target' could be various elements
+    const checked = (e.target as HTMLInputElement).checked;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : (name === 'kategoriaId' ? parseInt(value) : value),
+    }));
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitMessage('');
+    setIsError(false);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/ujingatlan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setSubmitMessage('Hirdetés sikeresen feladva!');
+      setIsError(false);
+      console.log('Sikeres hirdetés feladás:', result);
+      router.push('/offers'); // Navigate to offers page on success
+    } catch (e: any) {
+      setSubmitMessage(`Hiba történt a hirdetés feladásakor: ${e.message}`);
+      setIsError(true);
+      console.error('Hiba a hirdetés feladásakor:', e);
+    }
+  };
+
+  return (
+    <div className="container mt-5">
+      <Head>
+        <title>Új Hirdetés Feladása</title>
+      </Head>
+      <h1 className="mb-4">Új Hirdetés Feladása</h1>
+
+      <form onSubmit={handleSubmit} className="p-4 border rounded shadow-sm">
+        <div className="mb-3">
+          <label htmlFor="kategoriaId" className="form-label">Kategória:</label>
+          <select
+            className="form-select"
+            id="kategoriaId"
+            name="kategoriaId"
+            value={formData.kategoriaId}
+            onChange={handleChange}
+            required
+          >
+            {/* Ensure there's a default empty option or handle case where categories are not loaded yet */}
+            {categories.length === 0 && <option value="">Kategóriák betöltése...</option>}
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.megnevezes}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-3">
+          <label htmlFor="leiras" className="form-label">Leírás:</label>
+          <textarea
+            className="form-control"
+            id="leiras"
+            name="leiras"
+            value={formData.leiras}
+            onChange={handleChange}
+            rows={5}
+            required
+          ></textarea>
+        </div>
+
+        <div className="mb-3">
+          <label htmlFor="hirdetesDatuma" className="form-label">Hirdetés Dátuma:</label>
+          <input
+            type="date"
+            className="form-control"
+            id="hirdetesDatuma"
+            name="hirdetesDatuma"
+            value={formData.hirdetesDatuma}
+            readOnly // Make the date field read-only
+          />
+        </div>
+
+        <div className="mb-3 form-check">
+          <input
+            type="checkbox"
+            className="form-check-input"
+            id="tehermentes"
+            name="tehermentes"
+            checked={formData.tehermentes}
+            onChange={handleChange}
+          />
+          <label className="form-check-label" htmlFor="tehermentes">Tehermentes</label>
+        </div>
+
+        <div className="mb-3">
+          <label htmlFor="kepUrl" className="form-label">Kép URL:</label>
+          <input
+            type="url"
+            className="form-control"
+            id="kepUrl"
+            name="kepUrl"
+            value={formData.kepUrl}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <button type="submit" className="btn btn-primary">Hirdetés Feladása</button>
+      </form>
+
+      {submitMessage && (
+        <div className={`mt-3 alert ${isError ? 'alert-danger' : 'alert-success'}`}>
+          {submitMessage}
+        </div>
+      )}
+
+      <button className="btn btn-secondary mt-3" onClick={() => router.push('/')}>Vissza a főoldalra</button>
+    </div>
+  );
+};
+
+export default NewAdPage;

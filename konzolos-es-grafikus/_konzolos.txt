@@ -1,0 +1,192 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json; // For JSON parsing
+using System.Globalization; // For parsing doubles with a dot as decimal separator
+
+// 2. Készítsen saját osztályokat Ad, Seller és Category azonosítóval
+public class Category
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+}
+
+public class Seller
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Phone { get; set; }
+}
+
+public class Ad
+{
+    public int Id { get; set; }
+    public string Description { get; set; }
+    public int Rooms { get; set; }
+    public int Area { get; set; }
+    public int Floors { get; set; }
+    public Category Category { get; set; }
+    public Seller Seller { get; set; }
+    public bool FreeOfCharge { get; set; }
+    public string ImageUrl { get; set; }
+    public string Latlong { get; set; }
+    public DateTime CreateAt { get; set; }
+
+    // 4. Szükség esetén az Ad osztály adattagjainak beállítását konstruktor segítségével állítsa be!
+    // Ez a konstruktor a CSV adatokhoz igazodik.
+    public Ad(string[] data)
+    {
+        Id = int.Parse(data[0]);
+        Description = data[1];
+        Rooms = int.Parse(data[2]);
+        Area = int.Parse(data[3]);
+        Floors = int.Parse(data[4]);
+        Category = new Category { Id = int.Parse(data[5]), Name = data[6] };
+        Seller = new Seller { Id = int.Parse(data[7]), Name = data[8], Phone = data[9] };
+        FreeOfCharge = bool.Parse(data[10]);
+        ImageUrl = data[11];
+        Latlong = data[12];
+        CreateAt = DateTime.Parse(data[13]);
+    }
+
+    // Konstruktor JSON deserializációhoz (amennyiben JSON-t használnánk)
+    public Ad() { }
+
+
+    // 3. Készítsen statikus metódust az Ad osztályhoz az adatforráshoz történő kapcsolódásra
+    public static List<Ad> LoadFromCsv(string fileName)
+    {
+        List<Ad> ads = new List<Ad>();
+        try
+        {
+            // Read all lines, skip header, and parse each line
+            var lines = File.ReadAllLines(fileName).Skip(1);
+            foreach (var line in lines)
+            {
+                string[] data = line.Split(';');
+                // Handle potential issues with missing data or incorrect parsing for Latlong
+                if (data.Length >= 13) // Ensure enough elements for basic Ad construction
+                {
+                    ads.Add(new Ad(data));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading CSV: {ex.Message}");
+        }
+        return ads;
+    }
+
+    // Metódus JSON fájl betöltésére (alternatívaként a CSV-hez)
+    public static List<Ad> LoadFromJson(string fileName)
+    {
+        List<Ad> ads = new List<Ad>();
+        try
+        {
+            string jsonString = File.ReadAllText(fileName);
+            // It might require a custom converter for Category and Seller if they are nested objects in JSON
+            // For simplicity, assuming a flat structure or direct mapping from JSON to Ad properties.
+            // If Category and Seller are separate objects in the JSON, define them as such in Ad class
+            // and System.Text.Json will handle deserialization.
+            ads = JsonSerializer.Deserialize<List<Ad>>(jsonString);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading JSON: {ex.Message}");
+        }
+        return ads;
+    }
+
+    // 7. Készítsen DistanceTo néven valós értékkel visszatérő metódust
+    public double DistanceTo(double targetLat, double targetLong)
+    {
+        if (string.IsNullOrEmpty(Latlong))
+        {
+            return double.MaxValue; // Return a large value if coordinates are missing
+        }
+
+        string[] coords = Latlong.Split(',');
+        if (coords.Length != 2)
+        {
+            return double.MaxValue; // Invalid format
+        }
+
+        // Use InvariantCulture to ensure dot as decimal separator
+        if (!double.TryParse(coords[0], NumberStyles.Any, CultureInfo.InvariantCulture, out double adLat) ||
+            !double.TryParse(coords[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double adLong))
+        {
+            return double.MaxValue; // Parsing failed
+        }
+
+        // Pitagorasz-tétel: sqrt((x2-x1)^2 + (y2-y1)^2)
+        return Math.Sqrt(Math.Pow(adLat - targetLat, 2) + Math.Pow(adLong - targetLong, 2));
+    }
+}
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        // 5. Olvassa be a választott adatforrás adatait
+        // Választás: CSV fájl (realestates.csv)
+        List<Ad> ads = Ad.LoadFromCsv("realestates.csv");
+
+        Console.WriteLine("6. feladat:");
+        // 6. Határozza meg és írja ki a minta szerint az eladásra kínált földszinti ingatlanok átlagos alapterületét!
+        var groundFloorAds = ads.Where(a => a.Floors == 0).ToList();
+        if (groundFloorAds.Any())
+        {
+            double averageArea = groundFloorAds.Average(a => a.Area);
+            Console.WriteLine($"Földszinti ingatlanok átlagos alapterülete: {averageArea:F2} nm");
+        }
+        else
+        {
+            Console.WriteLine("Nincs földszinti ingatlan az adatok között.");
+        }
+
+        Console.WriteLine("---");
+
+        Console.WriteLine("8. feladat:");
+        // 8. Keresse ki és írja ki a minta alapján annak a tehermentes ingatlannak az adatait, melyik a legközelebb van
+        // légvonalban a Mesevár óvodához!
+        double meservarLat = 47.4164220114023;
+        double meservarLong = 19.066342425796986;
+
+        Ad closestFreeOfChargeAd = null;
+        double minDistance = double.MaxValue;
+
+        foreach (var ad in ads.Where(a => a.FreeOfCharge))
+        {
+            double distance = ad.DistanceTo(meservarLat, meservarLong);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestFreeOfChargeAd = ad;
+            }
+        }
+
+        if (closestFreeOfChargeAd != null)
+        {
+            Console.WriteLine($"A legközelebbi tehermentes ingatlan adatai:");
+            Console.WriteLine($"\tAzonosító: {closestFreeOfChargeAd.Id}");
+            Console.WriteLine($"\tLeírás: {closestFreeOfChargeAd.Description}");
+            Console.WriteLine($"\tSzobák száma: {closestFreeOfChargeAd.Rooms}");
+            Console.WriteLine($"\tAlapterület: {closestFreeOfChargeAd.Area} nm");
+            Console.WriteLine($"\tEmelet: {closestFreeOfChargeAd.Floors}");
+            Console.WriteLine($"\tKategória: {closestFreeOfChargeAd.Category.Name}");
+            Console.WriteLine($"\tEladó: {closestFreeOfChargeAd.Seller.Name} ({closestFreeOfChargeAd.Seller.Phone})");
+            Console.WriteLine($"\tKép URL: {closestFreeOfChargeAd.ImageUrl}");
+            Console.WriteLine($"\tGPS koordináták: {closestFreeOfChargeAd.Latlong}");
+            Console.WriteLine($"\tFeladás dátuma: {closestFreeOfChargeAd.CreateAt.ToShortDateString()}");
+            Console.WriteLine($"\tTávolság a Mesevár óvodától: {minDistance:F2} egység");
+        }
+        else
+        {
+            Console.WriteLine("Nem található tehermentes ingatlan.");
+        }
+
+        Console.ReadKey(); // Keep console open
+    }
+}

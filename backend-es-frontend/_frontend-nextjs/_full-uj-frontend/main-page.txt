@@ -1,0 +1,88 @@
+You're right! Next.js has moved towards the App Router (app directory) as the recommended approach for new projects. This brings new conventions for data fetching, routing, and component organization. Let's adapt the previous solution to use the app directory structure with TypeScript (TSX).
+
+Key Changes with the App Router
+Routing: Instead of pages/*.tsx, routes are defined by folders and page.tsx files inside the app directory (e.g., app/offers/page.tsx for the /offers route).
+Layouts: layout.tsx files can define shared UI for a segment of the application.
+Data Fetching: The App Router introduces powerful new ways to fetch data, including direct server components and the Workspace API which is automatically memoized and cached. For client-side interactions (like forms and user-triggered fetches), we'll still use useEffect and useState within Client Components.
+Client vs. Server Components: Components by default are Server Components in the app directory. To use client-side hooks like useState, useEffect, or useRouter, you need to add the "use client"; directive at the top of your file.
+Project Setup and Dependencies
+If you haven't already, create a new Next.js project with the App Router enabled and TypeScript:
+
+Bash
+
+npx create-next-app real-estate-app --typescript --app
+cd real-estate-app
+Then, install Bootstrap:
+
+Bash
+
+npm install bootstrap
+1. Integrating Bootstrap with the App Router
+With the App Router, global styles and scripts are typically imported in your root layout.tsx.
+
+app/layout.tsx:
+
+TypeScript
+
+// app/layout.tsx
+import 'bootstrap/dist/css/bootstrap.min.css';
+import '../styles/globals.css'; // Your custom global styles
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Ingatlan Portál',
+  description: 'Találja meg álmai otthonát, vagy adja fel hirdetését nálunk!',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="hu">
+      <body>{children}</body>
+    </html>
+  );
+}
+2. Home Page Component (app/page.tsx)
+The root page.tsx directly serves as the home page (/). This will be a Client Component because it needs Link from next/link for client-side navigation.
+
+app/page.tsx:
+
+TypeScript
+
+// app/page.tsx
+"use client"; // This component needs client-side interactivity
+
+import Head from 'next/head'; // Head is still useful for <head> elements
+import Link from 'next/link';
+import styles from '../styles/openpage.module.css';
+
+const HomePage: React.FC = () => {
+  return (
+    <div className={styles.container}>
+      {/* Head still manages the <head> section */}
+      <Head>
+        <title>Ingatlan Nyitóoldal</title>
+        {/* Favicon is typically in the public directory and Next.js handles it */}
+      </Head>
+
+      <main className={styles.main}>
+        <h1 className={styles.title}>Üdvözöljük az Ingatlan Portálon!</h1>
+        <p className={styles.description}>Találja meg álmai otthonát, vagy adja fel hirdetését nálunk!</p>
+
+        <div className={styles.buttonContainer}>
+          <Link href="/offers" passHref>
+            <button className="btn btn-primary btn-lg m-2">Nézze meg kínálatunkat</button>
+          </Link>
+          <Link href="/newad" passHref>
+            <button className="btn btn-success btn-lg m-2">Hirdessen nálunk!</button>
+          </Link>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default HomePage;
