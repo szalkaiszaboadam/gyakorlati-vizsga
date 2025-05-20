@@ -1,0 +1,590 @@
+Valóban, egy 1 órás vizsgán az osztályok külön fájlokba szedése nem feltétlenül elvárás, sőt, az időtakarékosság miatt kifejezetten megengedett, hogy mindent egyetlen .cs fájlba tegyél. Ez a "quick and dirty" módszer, ami vizsgán teljesen elfogadható, ha az a cél, hogy bemutasd a működő képességeidet.
+
+Megcsinálom az egyszerűsített autófoglaló mintát úgy, hogy minden kód (modell osztályok és adatbázis hozzáférés) egyetlen Form1.cs fájlba kerül.
+
+Egyszerűsített Autókölcsönző Minta (Minden egy fájlban)
+Fontos megjegyzések (ismétlés):
+
+MySQL adatbázis előkészítése: Mielőtt futtatod a kódot, létre kell hoznod egy MySQL adatbázist (autokolcsonzo) és a szükséges táblákat! A táblák struktúráját lentebb, az SQL scriptben megtalálod.
+NuGet csomag telepítése: Hozzá kell adnod a MySqlConnector NuGet csomagot a projektedhez. (Jobb klikk a projektre -> Manage NuGet Packages -> Browse -> Keresd meg a "MySqlConnector"-t és telepítsd).
+Form1.Designer.cs: A designer fájl tartalmát nem generálom le teljesen, mert azt a vizuális tervezővel célszerű elkészíteni. Csak a legfontosabb komponensek nevét és típusát adom meg, amikre a C# kódban hivatkozok.
+1. Adatbázis létrehozása és táblák (MySQL SQL script)
+Ugyanaz a script, mint az előzőben. Nincs szükség változtatásra.
+
+SQL
+
+-- Adatbázis létrehozása
+CREATE DATABASE IF NOT EXISTS autokolcsonzo;
+USE autokolcsonzo;
+
+-- Autók tábla
+CREATE TABLE IF NOT EXISTS autok (
+    auto_id INT PRIMARY KEY AUTO_INCREMENT,
+    marka VARCHAR(50) NOT NULL,
+    modell VARCHAR(50) NOT NULL,
+    rendszam VARCHAR(10) UNIQUE NOT NULL,
+    napi_ar DECIMAL(10, 2) NOT NULL,
+    elerheto BOOLEAN DEFAULT TRUE
+);
+
+-- Ügyfelek tábla (Nagyon egyszerűsítve, csak 1 fix ügyfél a példában)
+CREATE TABLE IF NOT EXISTS ugyfelek (
+    ugyfel_id INT PRIMARY KEY AUTO_INCREMENT,
+    nev VARCHAR(100) NOT NULL
+);
+
+-- Foglalások tábla
+CREATE TABLE IF NOT EXISTS foglalasok (
+    foglalas_id INT PRIMARY KEY AUTO_INCREMENT,
+    auto_id INT NOT NULL,
+    ugyfel_id INT NOT NULL,
+    berles_kezdete DATE NOT NULL,
+    berles_vege DATE NOT NULL,
+    teljes_ar DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (auto_id) REFERENCES autok(auto_id)
+);
+
+-- Tesztadatok beszúrása
+INSERT INTO autok (marka, modell, rendszam, napi_ar, elerheto) VALUES
+('Toyota', 'Corolla', 'ABC-123', 12000.00, TRUE),
+('Opel', 'Astra', 'DEF-456', 10000.00, TRUE),
+('Ford', 'Focus', 'GHI-789', 11000.00, TRUE),
+('BMW', 'X5', 'JKL-012', 25000.00, TRUE),
+('Suzuki', 'Swift', 'MNO-345', 8000.00, TRUE);
+
+INSERT INTO ugyfelek (nev) VALUES ('Példa Ügyfél'); -- Egy fix ügyfél
+2. C# Kód (Form1.cs) - Minden egy fájlban
+Nyisd meg a Form1.cs fájlt a projektedben, és másold be az alábbi kódot. Ne feledd, a Form1.Designer.cs fájlt a vizuális tervező hozza létre a GUI komponensekkel!
+
+C#
+
+using MySqlConnector; // MySqlConnector namespace
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Windows.Forms; // Windows Forms namespace
+
+namespace Autokolcsonzo
+{
+    // --- Modell Osztályok (itt definiálva a fő fájlban) ---
+
+    public class Auto
+    {
+        public int AutoId { get; set; }
+        public string Marka { get; set; }
+        public string Modell { get; set; }
+        public string Rendszam { get; set; }
+        public decimal NapiAr { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Marka} {Modell} ({Rendszam}) - {NapiAr:C} / nap";
+        }
+    }
+
+    public class Foglalas
+    {
+        public int FoglalasId { get; set; }
+        public int AutoId { get; set; }
+        public int UgyfelId { get; set; }
+        public DateTime BerlesKezdete { get; set; }
+        public DateTime BerlesVege { get; set; }
+        public decimal TeljesAr { get; set; }
+
+        // Kényelmi tulajdonságok a DataGridView-ben való megjelenítéshez
+        public string AutoRendszam { get; set; }
+        public string UgyfelNev { get; set; }
+    }
+
+
+    // --- Fő Form Osztály ---
+
+    public partial class Form1 : Form
+    {
+        // Adatbázis connection string (ÁLLÍTSD BE A SAJÁT ADATAIDAT!)
+        private const string ConnectionString = "Server=localhost;Port=3306;Database=autokolcsonzo;Uid=root;Pwd=;";
+        private const int FIX_UGYFEL_ID = 1; // A fix ügyfél ID az adatbázisból
+
+        public Form1()
+        {
+            InitializeComponent(); // Ez a metódus inicializálja a GUI elemeket (Form1.Designer.cs)
+
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.Text = "Egyszerű Autókölcsönző";
+
+            // Kezdeti beállítások a GUI elemeknek
+            dtpBerlesKezdet.Value = DateTime.Today;
+            dtpBerlesVege.Value = DateTime.Today.AddDays(1);
+            dtpBerlesKezdet.MinDate = DateTime.Today;
+            dtpBerlesVege.MinDate = DateTime.Today.AddDays(1);
+
+            SetupDataGridView(dgvAutok);
+            SetupDataGridView(dgvFoglalasok);
+        }
+
+        private async void Form1_Load(object sender, EventArgs e)
+        {
+            // Ablak fixálása, nem lehet átméretezni
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+
+            await LoadAutokAsync(); // Autók betöltése a fő DGV-be indításkor
+            await LoadFoglalasokAsync(); // Foglalások betöltése indításkor
+        }
+
+        // --- Adatbázis Műveletek (metódusok a Form osztályon belül) ---
+
+        // Autók betöltése (vagy az összes, vagy a szabad autók egy adott időszakra)
+        private async Task LoadAutokAsync(DateTime? kezdet = null, DateTime? veg = null)
+        {
+            try
+            {
+                List<Auto> autok = new List<Auto>();
+                string query = "SELECT auto_id, marka, modell, rendszam, napi_ar FROM autok WHERE elerheto = TRUE";
+                List<MySqlParameter> parameters = new List<MySqlParameter>();
+
+                if (kezdet.HasValue && veg.HasValue)
+                {
+                    query += @" AND auto_id NOT IN (
+                                    SELECT f.auto_id
+                                    FROM foglalasok f
+                                    WHERE (f.berles_kezdete <= @veg AND f.berles_vege >= @kezdet)
+                                )";
+                    parameters.Add(new MySqlParameter("@kezdet", kezdet.Value.Date));
+                    parameters.Add(new MySqlParameter("@veg", veg.Value.Date));
+                }
+
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddRange(parameters.ToArray());
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                autok.Add(new Auto
+                                {
+                                    AutoId = reader.GetInt32("auto_id"),
+                                    Marka = reader.GetString("marka"),
+                                    Modell = reader.GetString("modell"),
+                                    Rendszam = reader.GetString("rendszam"),
+                                    NapiAr = reader.GetDecimal("napi_ar")
+                                });
+                            }
+                        }
+                    }
+                }
+                dgvAutok.DataSource = autok;
+                if (dgvAutok.Columns.Contains("AutoId"))
+                {
+                    dgvAutok.Columns["AutoId"].Visible = false; // Elrejtjük az ID oszlopot
+                }
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show($"Adatbázis hiba az autók betöltésekor: {ex.Message}", "Hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Általános hiba az autók betöltésekor: {ex.Message}", "Hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Foglalások betöltése (JOIN-nal a rendszámért és ügyfél nevéért)
+        private async Task LoadFoglalasokAsync()
+        {
+            try
+            {
+                List<Foglalas> foglalasok = new List<Foglalas>();
+                string query = @"
+                    SELECT
+                        f.foglalas_id,
+                        f.auto_id,
+                        f.ugyfel_id,
+                        f.berles_kezdete,
+                        f.berles_vege,
+                        f.teljes_ar,
+                        a.rendszam AS AutoRendszam,
+                        u.nev AS UgyfelNev
+                    FROM foglalasok f
+                    JOIN autok a ON f.auto_id = a.auto_id
+                    JOIN ugyfelek u ON f.ugyfel_id = u.ugyfel_id;";
+
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                foglalasok.Add(new Foglalas
+                                {
+                                    FoglalasId = reader.GetInt32("foglalas_id"),
+                                    AutoId = reader.GetInt32("auto_id"),
+                                    UgyfelId = reader.GetInt32("ugyfel_id"),
+                                    BerlesKezdete = reader.GetDateTime("berles_kezdete"),
+                                    BerlesVege = reader.GetDateTime("berles_vege"),
+                                    TeljesAr = reader.GetDecimal("teljes_ar"),
+                                    AutoRendszam = reader.GetString("AutoRendszam"),
+                                    UgyfelNev = reader.GetString("UgyfelNev")
+                                });
+                            }
+                        }
+                    }
+                }
+                dgvFoglalasok.DataSource = foglalasok;
+
+                // Oszlopok beállításai a dgvFoglalasok-ban
+                if (dgvFoglalasok.Columns.Contains("FoglalasId")) dgvFoglalasok.Columns["FoglalasId"].Visible = false;
+                if (dgvFoglalasok.Columns.Contains("AutoId")) dgvFoglalasok.Columns["AutoId"].Visible = false;
+                if (dgvFoglalasok.Columns.Contains("UgyfelId")) dgvFoglalasok.Columns["UgyfelId"].Visible = false;
+
+                if (dgvFoglalasok.Columns.Contains("AutoRendszam")) dgvFoglalasok.Columns["AutoRendszam"].HeaderText = "Autó Rendszám";
+                if (dgvFoglalasok.Columns.Contains("UgyfelNev")) dgvFoglalasok.Columns["UgyfelNev"].HeaderText = "Ügyfél Neve";
+                if (dgvFoglalasok.Columns.Contains("BerlesKezdete")) dgvFoglalasok.Columns["BerlesKezdete"].HeaderText = "Bérlés Kezdete";
+                if (dgvFoglalasok.Columns.Contains("BerlesVege")) dgvFoglalasok.Columns["BerlesVege"].HeaderText = "Bérlés Vége";
+                if (dgvFoglalasok.Columns.Contains("TeljesAr")) dgvFoglalasok.Columns["TeljesAr"].HeaderText = "Teljes Ár";
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show($"Adatbázis hiba a foglalások betöltésekor: {ex.Message}", "Hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Általános hiba a foglalások betöltésekor: {ex.Message}", "Hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Új foglalás hozzáadása az adatbázisba
+        private async Task AddFoglalasAsync(Foglalas foglalas)
+        {
+            string query = @"
+                INSERT INTO foglalasok (auto_id, ugyfel_id, berles_kezdete, berles_vege, teljes_ar)
+                VALUES (@autoId, @ugyfelId, @berlesKezdete, @berlesVege, @teljesAr)";
+
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@autoId", foglalas.AutoId);
+                    command.Parameters.AddWithValue("@ugyfelId", foglalas.UgyfelId);
+                    command.Parameters.AddWithValue("@berlesKezdete", foglalas.BerlesKezdete);
+                    command.Parameters.AddWithValue("@berlesVege", foglalas.BerlesVege);
+                    command.Parameters.AddWithValue("@teljesAr", foglalas.TeljesAr);
+
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        // --- Eseménykezelők (a Form1.Designer.cs-ben kell hozzárendelni!) ---
+
+        // Szabad autók keresése gomb kattintás
+        private async void btnSzabadAutokKeres_Click(object sender, EventArgs e)
+        {
+            DateTime kezdet = dtpBerlesKezdet.Value.Date;
+            DateTime veg = dtpBerlesVege.Value.Date;
+
+            if (veg <= kezdet)
+            {
+                MessageBox.Show("A bérlés vége dátuma nem lehet korábbi vagy azonos a kezdet dátumával!", "Dátum hiba", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            await LoadAutokAsync(kezdet, veg); // Autók szűrése az időszak alapján
+
+            if (dgvAutok.Rows.Count == 0)
+            {
+                MessageBox.Show("Nincs szabad autó a megadott időszakra.", "Információ", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        // Foglalás rögzítése gomb kattintás
+        private async void btnFoglalas_Click(object sender, EventArgs e)
+        {
+            if (dgvAutok.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Kérem válasszon ki egy autót a listából!", "Hiányzó adat", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            Auto kivalasztottAuto = dgvAutok.SelectedRows[0].DataBoundItem as Auto;
+
+            DateTime kezdet = dtpBerlesKezdet.Value.Date;
+            DateTime veg = dtpBerlesVege.Value.Date;
+
+            if (veg <= kezdet)
+            {
+                MessageBox.Show("A bérlés vége dátuma nem lehet korábbi vagy azonos a kezdet dátumával!", "Dátum hiba", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Árkalkuláció: Napi ár * napok száma
+            decimal napiAr = kivalasztottAuto.NapiAr;
+            int napokSzama = (int)(veg - kezdet).TotalDays;
+            decimal teljesAr = napiAr * napokSzama;
+
+            Foglalas ujFoglalas = new Foglalas
+            {
+                AutoId = kivalasztottAuto.AutoId,
+                UgyfelId = FIX_UGYFEL_ID, // Fix ügyfél ID használata
+                BerlesKezdete = kezdet,
+                BerlesVege = veg,
+                TeljesAr = teljesAr
+            };
+
+            try
+            {
+                await AddFoglalasAsync(ujFoglalas); // Hozzáadjuk az új foglalást
+                MessageBox.Show($"Foglalás sikeresen rögzítve! Teljes ár: {teljesAr:C}", "Siker", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await LoadAutokAsync(); // Frissíti a szabad autók listáját
+                await LoadFoglalasokAsync(); // Frissíti az összes foglalás listáját
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show($"Adatbázis hiba foglaláskor: {ex.Message}", "Hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Általános hiba foglaláskor: {ex.Message}", "Hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // "Összes autó mutatása" gomb kattintás
+        private async void btnOsszesAutoMutat_Click(object sender, EventArgs e)
+        {
+            await LoadAutokAsync(); // Újra betölti az összes autót, szűrés nélkül
+        }
+
+        // --- Segédmetódusok ---
+
+        // DataGridView alapbeállítások
+        private void SetupDataGridView(DataGridView dgv)
+        {
+            dgv.ReadOnly = true;
+            dgv.AllowUserToAddRows = false;
+            dgv.AllowUserToDeleteRows = false;
+            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgv.MultiSelect = false;
+            dgv.ColumnHeadersVisible = true;
+            dgv.RowHeadersVisible = false;
+            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
+    }
+}
+3. Form1.Designer.cs (Példa GUI elrendezésre)
+Ezt a részt a vizuális tervezőben kell felépítened. Húzd rá ezeket a komponenseket a Form-ra, és nevezd el őket a kódban használt nevekkel.
+
+C#
+
+namespace Autokolcsonzo
+{
+    partial class Form1
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.btnOsszesAutoMutat = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.dtpBerlesKezdet = new System.Windows.Forms.DateTimePicker();
+            this.dtpBerlesVege = new System.Windows.Forms.DateTimePicker();
+            this.btnSzabadAutokKeres = new System.Windows.Forms.Button();
+            this.dgvAutok = new System.Windows.Forms.DataGridView();
+            this.btnFoglalas = new System.Windows.Forms.Button();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.dgvFoglalasok = new System.Windows.Forms.DataGridView();
+            this.tabControl1.SuspendLayout();
+            this.tabPage1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvAutok)).BeginInit();
+            this.tabPage2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvFoglalasok)).BeginInit();
+            this.SuspendLayout();
+            //
+            // tabControl1
+            //
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl1.Location = new System.Drawing.Point(0, 0);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(700, 500);
+            this.tabControl1.TabIndex = 0;
+            //
+            // tabPage1
+            //
+            this.tabPage1.Controls.Add(this.btnOsszesAutoMutat);
+            this.tabPage1.Controls.Add(this.label1);
+            this.tabPage1.Controls.Add(this.label2);
+            this.tabPage1.Controls.Add(this.dtpBerlesKezdet);
+            this.tabPage1.Controls.Add(this.dtpBerlesVege);
+            this.tabPage1.Controls.Add(this.btnSzabadAutokKeres);
+            this.tabPage1.Controls.Add(this.dgvAutok);
+            this.tabPage1.Controls.Add(this.btnFoglalas);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(692, 474);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "Új foglalás";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            //
+            // btnOsszesAutoMutat
+            //
+            this.btnOsszesAutoMutat.Location = new System.Drawing.Point(170, 75);
+            this.btnOsszesAutoMutat.Name = "btnOsszesAutoMutat";
+            this.btnOsszesAutoMutat.Size = new System.Drawing.Size(150, 23);
+            this.btnOsszesAutoMutat.TabIndex = 7;
+            this.btnOsszesAutoMutat.Text = "Összes autó mutatása";
+            this.btnOsszesAutoMutat.UseVisualStyleBackColor = true;
+            this.btnOsszesAutoMutat.Click += new System.EventHandler(this.btnOsszesAutoMutat_Click);
+            //
+            // label1
+            //
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(10, 15);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(89, 13);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "Bérlés kezdete:";
+            //
+            // label2
+            //
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(10, 45);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(76, 13);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "Bérlés vége:";
+            //
+            // dtpBerlesKezdet
+            //
+            this.dtpBerlesKezdet.Location = new System.Drawing.Point(120, 12);
+            this.dtpBerlesKezdet.Name = "dtpBerlesKezdet";
+            this.dtpBerlesKezdet.Size = new System.Drawing.Size(150, 20);
+            this.dtpBerlesKezdet.TabIndex = 2;
+            //
+            // dtpBerlesVege
+            //
+            this.dtpBerlesVege.Location = new System.Drawing.Point(120, 42);
+            this.dtpBerlesVege.Name = "dtpBerlesVege";
+            this.dtpBerlesVege.Size = new System.Drawing.Size(150, 20);
+            this.dtpBerlesVege.TabIndex = 3;
+            //
+            // btnSzabadAutokKeres
+            //
+            this.btnSzabadAutokKeres.Location = new System.Drawing.Point(10, 75);
+            this.btnSzabadAutokKeres.Name = "btnSzabadAutokKeres";
+            this.btnSzabadAutokKeres.Size = new System.Drawing.Size(150, 23);
+            this.btnSzabadAutokKeres.TabIndex = 4;
+            this.btnSzabadAutokKeres.Text = "Szabad autók keresése";
+            this.btnSzabadAutokKeres.UseVisualStyleBackColor = true;
+            this.btnSzabadAutokKeres.Click += new System.EventHandler(this.btnSzabadAutokKeres_Click);
+            //
+            // dgvAutok
+            //
+            this.dgvAutok.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dgvAutok.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvAutok.Location = new System.Drawing.Point(10, 110);
+            this.dgvAutok.Name = "dgvAutok";
+            this.dgvAutok.Size = new System.Drawing.Size(670, 250);
+            this.dgvAutok.TabIndex = 5;
+            //
+            // btnFoglalas
+            //
+            this.btnFoglalas.Location = new System.Drawing.Point(10, 380);
+            this.btnFoglalas.Name = "btnFoglalas";
+            this.btnFoglalas.Size = new System.Drawing.Size(150, 30);
+            this.btnFoglalas.TabIndex = 6;
+            this.btnFoglalas.Text = "Foglalás rögzítése";
+            this.btnFoglalas.UseVisualStyleBackColor = true;
+            this.btnFoglalas.Click += new System.EventHandler(this.btnFoglalas_Click);
+            //
+            // tabPage2
+            //
+            this.tabPage2.Controls.Add(this.dgvFoglalasok);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(692, 474);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "Összes foglalás";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            //
+            // dgvFoglalasok
+            //
+            this.dgvFoglalasok.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvFoglalasok.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvFoglalasok.Location = new System.Drawing.Point(3, 3);
+            this.dgvFoglalasok.Name = "dgvFoglalasok";
+            this.dgvFoglalasok.Size = new System.Drawing.Size(686, 468);
+            this.dgvFoglalasok.TabIndex = 0;
+            //
+            // Form1
+            //
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(700, 500);
+            this.Controls.Add(this.tabControl1);
+            this.Name = "Form1";
+            this.Text = "Egyszerű Autókölcsönző";
+            this.Load += new System.EventHandler(this.Form1_Load);
+            this.tabControl1.ResumeLayout(false);
+            this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvAutok)).EndInit();
+            this.tabPage2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dgvFoglalasok)).EndInit();
+            this.ResumeLayout(false);
+
+        }
+
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.DateTimePicker dtpBerlesKezdet;
+        private System.Windows.Forms.DateTimePicker dtpBerlesVege;
+        private System.Windows.Forms.Button btnSzabadAutokKeres;
+        private System.Windows.Forms.DataGridView dgvAutok;
+        private System.Windows.Forms.Button btnFoglalas;
+        private System.Windows.Forms.DataGridView dgvFoglalasok;
+        private System.Windows.Forms.Button btnOsszesAutoMutat;
+    }
+}
