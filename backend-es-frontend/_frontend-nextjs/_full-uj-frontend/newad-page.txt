@@ -3,7 +3,7 @@ Similar to the offers page, create a newad folder inside app, and then page.tsx 
 
 app/newad/page.tsx:
 
-TypeScript
+TypeScripts
 
 // app/newad/page.tsx
 "use client"; // This component needs client-side interactivity
